@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { sendToSlack } from './slackService';
 
 // Pipedrive API configuration
 const PIPEDRIVE_API_TOKEN = process.env.REACT_APP_PIPEDRIVE_API_TOKEN || 'ac106d96dff4d025b11f318702c4a2c5c98e0886';
@@ -233,6 +234,17 @@ export async function saveBooking(bookingData) {
         error = dealError;
         // Still don't throw, return what we have
       }
+    }
+    
+    // Send notification to Slack
+    try {
+      console.log('Step 3: Sending notification to Slack');
+      const slackResult = await sendToSlack(bookingData);
+      console.log('Slack notification result:', slackResult);
+    } catch (slackError) {
+      // Log error but do not fail the overall request if Slack notification fails
+      console.error('Error sending to Slack (non-critical):', slackError);
+      // Continue with the flow, don't throw
     }
     
     const result = {
