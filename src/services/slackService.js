@@ -4,10 +4,9 @@ import axios from 'axios';
 const SLACK_TOKEN = 'xoxe.xoxp-1-Mi0yLTM5NTQ1OTkwMzg3NTctMzk1NzU3NDkzODcyMi04NzE5MTgzNjcwNzM2LTg3MTkxODM2NzA4MTYtNzc3ZTAzODA4NTNjNmUwODRmNjRlNTkzMjg3NTNiYzc3MjE4YWExYTYzOTFhYzc3M2M0NDRlOGZlYTA2OWUxMw';
 const SLACK_CHANNEL = '#leads'; // Channel name with # prefix for public channels
 
-// Alternative method - Incoming Webhook URL
-// You should create one at https://api.slack.com/apps > Your App > Incoming Webhooks
-// This is a fallback method that will be used if the postMessage API method fails
-const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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';
+// Slack Webhook URL for direct message delivery
+// This is the primary method we'll use since it requires fewer permissions
+const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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';
 
 /**
  * Format form data into a structured Slack message
@@ -134,71 +133,128 @@ const formatSlackMessage = (formData) => {
  * @returns {Promise} - Result of the Slack API call
  */
 /**
- * Try to send a message using the Slack webhook as fallback
+ * Create formatted message for Slack webhook
  */
-const sendViaWebhook = async (formData) => {
-  try {
-    console.log('Trying fallback method: Sending via Slack webhook...');
-    
-    // Create a simpler message for the webhook
-    const { serviceType, personalDetails } = formData;
-    
-    // Simplify service type
-    const serviceTypeMapping = {
-      'zonnepanelen': 'Zonnepanelen',
-      'zonnepanelen-batterij': 'Zonnepanelen & Batterijopslag',
-      'batterijopslag': 'Batterijopslag',
-      'laadpaal': 'Laadpaal'
-    };
-    
-    // Webhook requires different format
-    const webhookPayload = {
-      text: `🔔 *Nieuwe offerte aanvraag*: ${serviceTypeMapping[serviceType] || serviceType}`,
-      blocks: [
-        {
-          type: "header",
-          text: {
-            type: "plain_text",
-            text: "🔔 Nieuwe Offerte Aanvraag",
-            emoji: true
-          }
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*Klant:* ${personalDetails.name}\n*Email:* ${personalDetails.email}\n*Tel:* ${personalDetails.phone}\n*Adres:* ${personalDetails.address}`
-          }
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*Service:* ${serviceTypeMapping[serviceType] || serviceType}`
-          }
-        }
-      ]
-    };
-    
-    // Send to webhook
-    const response = await axios.post(SLACK_WEBHOOK_URL, webhookPayload);
-    
-    console.log('Webhook response:', response.status);
-    return { success: response.status === 200 };
-  } catch (error) {
-    console.error('Error sending via webhook:', error);
-    return { success: false, error: error.message };
+const createWebhookMessage = (formData) => {
+  const { serviceType, roofType, energyConsumption, additionalOptions, personalDetails } = formData;
+  
+  // Map service types to human-readable names
+  const serviceTypeMapping = {
+    'zonnepanelen': 'Zonnepanelen',
+    'zonnepanelen-batterij': 'Zonnepanelen & Batterijopslag',
+    'batterijopslag': 'Batterijopslag',
+    'laadpaal': 'Laadpaal'
+  };
+  
+  // Format roof type based on service type
+  let roofTypeText = '';
+  if (serviceType === 'zonnepanelen' || serviceType === 'zonnepanelen-batterij') {
+    roofTypeText = roofType === 1 ? 'Hellend dak' : 'Plat dak';
+  } else if (serviceType === 'batterijopslag') {
+    roofTypeText = roofType === 1 ? 'Heeft hybride omvormer' : 'Heeft geen hybride omvormer';
+  } else if (serviceType === 'laadpaal') {
+    if (roofType === 1) roofTypeText = '1-fase aansluiting';
+    else if (roofType === 2) roofTypeText = '3-fase aansluiting';
+    else roofTypeText = 'Weet niet welke aansluiting';
   }
+  
+  // Create additional options text if available
+  const additionalOptionsText = Object.keys(additionalOptions || {}).length > 0 
+    ? Object.entries(additionalOptions)
+      .filter(([_, details]) => details && details.selected)
+      .map(([service]) => service)
+      .join(', ')
+    : 'Geen extra opties geselecteerd';
+    
+  // Create a more comprehensive message
+  return {
+    text: `🔔 Nieuwe offerte aanvraag: ${serviceTypeMapping[serviceType] || serviceType} - ${personalDetails.name}`,
+    blocks: [
+      {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "🔔 Nieuwe Offerte Aanvraag",
+          emoji: true
+        }
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*Naam:*\n${personalDetails.name}`
+          },
+          {
+            type: "mrkdwn",
+            text: `*Telefoon:*\n${personalDetails.phone}`
+          }
+        ]
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*Email:*\n${personalDetails.email}`
+          },
+          {
+            type: "mrkdwn",
+            text: `*Adres:*\n${personalDetails.address}`
+          }
+        ]
+      },
+      {
+        type: "divider"
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*Service:*\n${serviceTypeMapping[serviceType] || serviceType}`
+          },
+          {
+            type: "mrkdwn",
+            text: `*Type:*\n${roofTypeText}`
+          }
+        ]
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*Verbruik:*\n${energyConsumption} kWh`
+          },
+          {
+            type: "mrkdwn",
+            text: `*Extra opties:*\n${additionalOptionsText}`
+          }
+        ]
+      },
+      {
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `Aanvraag ontvangen op ${new Date().toLocaleString('nl-BE')}`
+          }
+        ]
+      }
+    ]
+  };
 };
 
-export const sendToSlack = async (formData) => {
+/**
+ * Try to send a message using the Slack API as fallback
+ */
+const sendViaSlackAPI = async (formData) => {
   try {
-    console.log('Sending lead notification to Slack...');
+    console.log('Trying fallback method: Sending via Slack API...');
     
     const message = formatSlackMessage(formData);
-    console.log('Formatted Slack message:', JSON.stringify(message, null, 2));
     
-    console.log('Making API request to Slack...');
     const response = await axios.post('https://slack.com/api/chat.postMessage', message, {
       headers: {
         'Authorization': `Bearer ${SLACK_TOKEN}`,
@@ -209,32 +265,58 @@ export const sendToSlack = async (formData) => {
     console.log('Slack API response:', response.data);
     
     if (!response.data.ok) {
-      console.error('Slack API returned error:', response.data);
       throw new Error(`Slack API error: ${response.data.error || 'Unknown error'}`);
     }
     
-    console.log('Successfully sent notification to Slack');
-    return response.data;
+    return { success: true };
   } catch (error) {
-    console.error('Error sending to Slack via API:', error);
+    console.error('Error sending via Slack API:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Send a lead notification to Slack
+ */
+export const sendToSlack = async (formData) => {
+  try {
+    console.log('Sending lead notification to Slack via webhook...');
+    
+    // Create webhook message
+    const webhookMessage = createWebhookMessage(formData);
+    console.log('Webhook message payload:', JSON.stringify(webhookMessage, null, 2));
+    
+    // Send via webhook (primary method)
+    const response = await axios.post(SLACK_WEBHOOK_URL, webhookMessage);
+    
+    console.log('Webhook response status:', response.status);
+    
+    if (response.status !== 200) {
+      throw new Error(`Webhook error: Status ${response.status}`);
+    }
+    
+    console.log('Successfully sent notification to Slack via webhook');
+    return { success: true, via: 'webhook' };
+  } catch (error) {
+    console.error('Error sending to Slack via webhook:', error);
     
     // Enhanced error logging
     if (error.response) {
-      console.error('Slack API Error Response:', error.response.data);
-      console.error('Slack API Error Status:', error.response.status);
+      console.error('Webhook Error Response:', error.response.data);
+      console.error('Webhook Error Status:', error.response.status);
     } else if (error.request) {
-      console.error('No response received from Slack API:', error.request);
+      console.error('No response received from webhook:', error.request);
     } else {
       console.error('Error details:', error.message);
     }
     
-    // Try fallback method using webhook
-    console.log('Attempting fallback method with webhook...');
-    const webhookResult = await sendViaWebhook(formData);
+    // Try fallback method using Slack API
+    console.log('Webhook failed. Attempting fallback with Slack API...');
+    const apiResult = await sendViaSlackAPI(formData);
     
-    if (webhookResult.success) {
-      console.log('Successfully sent via webhook fallback');
-      return { success: true, via: 'webhook' };
+    if (apiResult.success) {
+      console.log('Successfully sent via Slack API fallback');
+      return { success: true, via: 'api' };
     }
     
     // Both methods failed
