@@ -246,35 +246,60 @@ const createDeal = async (personId, bookingData) => {
       estimatedValue = 2000;
     }
     
-    // Prepare the deal payload with all necessary information
+    // First create a basic payload without the custom fields
+    // Some Pipedrive APIs reject non-standard fields in the initial creation
     const dealPayload = {
       title: dealTitle,
       person_id: personId,
       status: 'open',
       visible_to: 3, // visible to entire company
       value: estimatedValue,
-      currency: 'EUR',
-      description: detailedDescription, // Regular description field as fallback
-      ...customFields // Add the custom field(s)
+      currency: 'EUR'
     };
     
     console.log('Deal payload to Pipedrive:', dealPayload);
     
-    // Create the deal
+    // Create the deal first with basic information
     const response = await axios.post(`${PIPEDRIVE_API_URL}/deals?api_token=${PIPEDRIVE_API_TOKEN}`, dealPayload);
     
     if (response.data.success) {
-      console.log('Deal created successfully in Pipedrive:', response.data.data.id);
+      const dealId = response.data.data.id;
+      console.log('Deal created successfully in Pipedrive:', dealId);
       
-      // As a precaution, also update the deal to ensure the custom field is set
+      // Now update the deal with the custom field in a separate request
+      // This two-step approach works better with Pipedrive's API
       try {
+        console.log('Updating deal with detailed description...');
+        
+        // Try updating with a notes field first - might be more reliable than custom fields
         await axios.put(
-          `${PIPEDRIVE_API_URL}/deals/${response.data.data.id}?api_token=${PIPEDRIVE_API_TOKEN}`,
+          `${PIPEDRIVE_API_URL}/deals/${dealId}?api_token=${PIPEDRIVE_API_TOKEN}`,
+          { notes: detailedDescription }
+        );
+        console.log('Updated deal with notes field');
+        
+        // Also try the custom field for completeness
+        await axios.put(
+          `${PIPEDRIVE_API_URL}/deals/${dealId}?api_token=${PIPEDRIVE_API_TOKEN}`,
           { [PIPEDRIVE_DESCRIPTION_FIELD_KEY]: detailedDescription }
         );
         console.log('Updated deal with custom description field');
       } catch (updateError) {
-        console.error('Failed to update custom field, but deal was created successfully:', updateError);
+        console.error('Failed to update description fields, but deal was created successfully:', updateError);
+        
+        // Last resort: try to add a note to the deal
+        try {
+          await axios.post(
+            `${PIPEDRIVE_API_URL}/notes?api_token=${PIPEDRIVE_API_TOKEN}`,
+            { 
+              deal_id: dealId,
+              content: detailedDescription
+            }
+          );
+          console.log('Added description as a note to the deal');
+        } catch (noteError) {
+          console.error('Failed to add note to deal:', noteError);
+        }
       }
       
       return response.data.data.id;
@@ -353,13 +378,11 @@ export async function saveBooking(bookingData) {
         // Create detailed description even for fallback
         const detailedDescription = createDetailedDescription(bookingData);
         
-        // Simplified but still comprehensive payload
+        // Keep the fallback payload extremely simple
         const simplePayload = {
           title: dealTitle,
           person_id: personId,
-          visible_to: 3,
-          description: detailedDescription, // Regular description field as fallback
-          [PIPEDRIVE_DESCRIPTION_FIELD_KEY]: detailedDescription // Custom field with API key
+          visible_to: 3
         };
         
         const response = await axios.post(
@@ -371,15 +394,37 @@ export async function saveBooking(bookingData) {
           dealId = response.data.data.id;
           console.log('Simplified deal created successfully with ID:', dealId);
           
-          // Update the custom field explicitly to ensure it's set
+          // Try multiple approaches to save the description
           try {
+            // First try with notes field
+            await axios.put(
+              `${PIPEDRIVE_API_URL}/deals/${dealId}?api_token=${PIPEDRIVE_API_TOKEN}`,
+              { notes: detailedDescription }
+            );
+            console.log('Updated deal with notes field using fallback method');
+            
+            // Then try with the custom field
             await axios.put(
               `${PIPEDRIVE_API_URL}/deals/${dealId}?api_token=${PIPEDRIVE_API_TOKEN}`,
               { [PIPEDRIVE_DESCRIPTION_FIELD_KEY]: detailedDescription }
             );
             console.log('Updated deal with custom description field using fallback method');
           } catch (updateError) {
-            console.error('Failed to update custom field in fallback, but deal was created:', updateError);
+            console.error('Failed to update fields in fallback, trying note approach:', updateError);
+            
+            // Last resort: try to add a note
+            try {
+              await axios.post(
+                `${PIPEDRIVE_API_URL}/notes?api_token=${PIPEDRIVE_API_TOKEN}`,
+                { 
+                  deal_id: dealId,
+                  content: detailedDescription
+                }
+              );
+              console.log('Added description as a note to the deal using fallback method');
+            } catch (noteError) {
+              console.error('All attempts to add description failed:', noteError);
+            }
           }
         }
       } catch (fallbackError) {
