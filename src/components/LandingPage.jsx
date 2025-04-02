@@ -927,7 +927,9 @@ const LandingPage = () => {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center px-4">
                     <div className="text-3xl font-bold text-white mb-2">1. PERSOONLIJK ADVIES</div>
-                    <p className="text-white text-sm">Persoonlijk energieadvies op maat bij u thuis</p>
+                    <p className="text-white text-base">
+                      We analyseren uw energieverbruik, controleren uw dak en elektrische installatie waarna we een transparante offerte op maat afleveren.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -945,7 +947,9 @@ const LandingPage = () => {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center px-4">
                     <div className="text-3xl font-bold text-white mb-2">2. INSTALLATIE</div>
-                    <p className="text-white text-sm">Professionele installatie door gecertificeerde monteurs</p>
+                    <p className="text-white text-base">
+                      Onze ervaren techniekers zorgen ervoor dat alles professioneel is geïnstalleerd en afgewerkt, dit gebeurt meestal binnen één werkdag.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -963,7 +967,9 @@ const LandingPage = () => {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center px-4">
                     <div className="text-3xl font-bold text-white mb-2">3. OPSTART</div>
-                    <p className="text-white text-sm">Inbedrijfstelling en uitleg over uw nieuwe systeem</p>
+                    <p className="text-white text-base">
+                      U krijgt uitgebreide uitleg over het gebruik, we installeren de monitoring app en overhandigen alle garantiecertificaten.
+                    </p>
                   </div>
                 </div>
               </div>
