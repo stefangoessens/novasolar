@@ -1065,7 +1065,7 @@ const LandingPage = () => {
                   </div>
                   <div className="ml-3">
                     <p className="font-semibold text-gray-900">Jan Martens</p>
-                    <p className="text-sm text-gray-500">Brussel</p>
+                    <p className="text-sm text-gray-500">Grimbergen</p>
                   </div>
                 </div>
               </div>
@@ -1090,7 +1090,7 @@ const LandingPage = () => {
                   </div>
                   <div className="ml-3">
                     <p className="font-semibold text-gray-900">Emma Verhoeven</p>
-                    <p className="text-sm text-gray-500">Antwerpen</p>
+                    <p className="text-sm text-gray-500">Mechelen</p>
                   </div>
                 </div>
               </div>
@@ -1115,7 +1115,7 @@ const LandingPage = () => {
                   </div>
                   <div className="ml-3">
                     <p className="font-semibold text-gray-900">Lucas Dubois</p>
-                    <p className="text-sm text-gray-500">Gent</p>
+                    <p className="text-sm text-gray-500">Brasschaat</p>
                   </div>
                 </div>
               </div>
