@@ -907,7 +907,7 @@ const LandingPage = () => {
         <div className="py-16">
           <div className="mx-4 md:mx-8">
             <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-2">
-              Onze 3-staps aanpak
+              Onze aanpak in 3 stappen
             </h2>
             <p className="text-xl text-center text-gray-600 mb-12">
               Onze eenvoudige en transparante manier van werken
