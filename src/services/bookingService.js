@@ -5,12 +5,24 @@ import { sendToSlack } from './slackService';
 const PIPEDRIVE_API_TOKEN = process.env.REACT_APP_PIPEDRIVE_API_TOKEN || 'ac106d96dff4d025b11f318702c4a2c5c98e0886';
 const PIPEDRIVE_API_URL = 'https://api.pipedrive.com/v1';
 
-// Mapping of cleaningType to readable service names
+// Mapping of cleaningType to readable service names with descriptions
 const serviceTypeMapping = {
-  'zonnepanelen': 'Zonnepanelen',
-  'batterijopslag': 'Batterijopslag', 
-  'zonnepanelen-batterij': 'Zonnepanelen & Batterijopslag',
-  'laadpaal': 'Laadpaal'
+  'zonnepanelen': {
+    name: 'Zonnepanelen',
+    description: 'Complete installatie van zonnepanelen'
+  },
+  'batterijopslag': {
+    name: 'Batterijopslag',
+    description: 'Opslag van uw zelf opgewekte energie'
+  },
+  'zonnepanelen-batterij': {
+    name: 'Zonnepanelen & Batterijopslag',
+    description: 'Complete oplossing voor energiebesparing'
+  },
+  'laadpaal': {
+    name: 'Laadpaal',
+    description: 'Elektrische auto thuis opladen'
+  }
 };
 
 // Mapping for roof types
@@ -19,12 +31,39 @@ const roofTypeMapping = {
   2: 'Plat dak'
 };
 
+// Mapping for battery hybrid inverter
+const batteryInverterMapping = {
+  1: 'Ja, heeft hybride omvormer',
+  2: 'Nee, heeft geen hybride omvormer'
+};
+
+// Mapping for EV charger connection types
+const chargerConnectionMapping = {
+  1: '1-fase aansluiting',
+  2: '3-fase aansluiting',
+  3: 'Onbekend welke aansluiting'
+};
+
+// Mapping for house age
+const houseAgeMapping = {
+  'old': 'Ouder dan 10 jaar (gebouwd vóór 2014)',
+  'new': 'Jonger dan 10 jaar (gebouwd na 2014)'
+};
+
 // Mapping for consumption levels
 const consumptionMapping = {
-  25: '2000-3000 kWh',
-  35: '3000-4000 kWh',
-  50: '4000-6000 kWh',
-  70: '6000+ kWh'
+  25: '2000-3000 kWh (Klein huishouden, 1-2 personen)',
+  35: '3000-4000 kWh (Gemiddeld huishouden, 2-3 personen)',
+  50: '4000-6000 kWh (Groot huishouden, 3-4 personen)',
+  70: '6000+ kWh (Zeer groot huishouden, 5+ personen)'
+};
+
+// Mapping for EV charging with existing solar/battery
+const evChargingWithSolarMapping = {
+  1: 'Heeft al zonnepanelen',
+  2: 'Heeft een thuisbatterij',
+  3: 'Heeft zonnepanelen en een thuisbatterij',
+  4: 'Heeft geen zonnepanelen of thuisbatterij'
 };
 
 // Helper function to create a person in Pipedrive
@@ -63,68 +102,160 @@ const createPerson = async (personalDetails) => {
   }
 };
 
+// Pipedrive data field key for deal description
+const PIPEDRIVE_DESCRIPTION_FIELD_KEY = '7d0f1de90d7783c75fd862efd9ee7b7f6eb94c18';
+
+/**
+ * Create a comprehensive description of all selections made in the form
+ */
+const createDetailedDescription = (bookingData) => {
+  const { serviceType, roofType, numWindows, energyConsumption, additionalOptions, personalDetails } = bookingData;
+  
+  // Format date/time for better readability
+  const formattedDate = new Date().toLocaleString('nl-BE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  // Start building the description
+  let description = `## OFFERTE AANVRAAG DETAILS\n`;
+  description += `Aanvraag ontvangen op: ${formattedDate}\n\n`;
+  
+  // Step 1: Service Type
+  const serviceInfo = serviceTypeMapping[serviceType] || { name: serviceType, description: 'Onbekend type' };
+  description += `## 1. TYPE INSTALLATIE\n`;
+  description += `Geselecteerd: **${serviceInfo.name}**\n`;
+  description += `Omschrijving: ${serviceInfo.description}\n\n`;
+  
+  // Step 2: Conditional based on service type
+  description += `## 2. CONFIGURATIE\n`;
+  if (serviceType === 'zonnepanelen' || serviceType === 'zonnepanelen-batterij') {
+    description += `Daktype: **${roofTypeMapping[roofType] || 'Onbekend'}**\n\n`;
+  } else if (serviceType === 'batterijopslag') {
+    description += `Hybride omvormer aanwezig: **${batteryInverterMapping[roofType] || 'Onbekend'}**\n\n`;
+    
+    // Check if there's specific brand information saved in numWindows for battery installations
+    if (roofType === 1 && numWindows >= 1 && numWindows <= 6) {
+      const brands = ['SMA', 'Fronius', 'Huawei', 'Goodwe', 'SolarEdge', 'Onbekend'];
+      const selectedBrand = brands[numWindows - 1] || 'Onbekend';
+      description += `Merk omvormer: **${selectedBrand}**\n\n`;
+    }
+  } else if (serviceType === 'laadpaal') {
+    description += `Stroomaansluiting: **${chargerConnectionMapping[roofType] || 'Onbekend'}**\n\n`;
+  }
+  
+  // Step 3: House age or solar info for EV charger
+  description += `## 3. WONING DETAILS\n`;
+  if (serviceType === 'zonnepanelen' || serviceType === 'zonnepanelen-batterij') {
+    // House age for solar installations
+    if (additionalOptions && additionalOptions.house_age) {
+      description += `Leeftijd woning: **${houseAgeMapping[additionalOptions.house_age] || 'Onbekend'}**\n\n`;
+    }
+  } else if (serviceType === 'laadpaal') {
+    // Solar status for EV charger
+    description += `Bestaande installatie: **${evChargingWithSolarMapping[numWindows] || 'Onbekend'}**\n\n`;
+  }
+  
+  // Step 4: Energy consumption
+  description += `## 4. ENERGIEVERBRUIK\n`;
+  if (serviceType === 'batterijopslag' && roofType === 2) {
+    // For battery without hybrid inverter - slider value
+    description += `Jaarlijks verbruik: **${numWindows * 100} kWh**\n`;
+    description += `Geschat aantal personen: ${Math.ceil(numWindows * 100 / 3500)}\n\n`;
+  } else {
+    // For other services - buttons or different selection method
+    const consumptionValue = energyConsumption || (numWindows * 100);
+    const consumptionLabel = consumptionMapping[consumptionValue/100] || `${consumptionValue} kWh`;
+    description += `Jaarlijks verbruik: **${consumptionLabel}**\n\n`;
+  }
+  
+  // Additional options/services if selected
+  if (additionalOptions && Object.keys(additionalOptions).length > 0) {
+    description += `## EXTRA OPTIES\n`;
+    let hasOptions = false;
+    
+    Object.entries(additionalOptions).forEach(([option, details]) => {
+      // Skip the house_age property as it's handled separately
+      if (option === 'house_age') return;
+      
+      if (details && details.selected) {
+        hasOptions = true;
+        description += `- **${option}**`;
+        if (details.count) {
+          description += ` (Aantal: ${details.count})`;
+        }
+        description += `\n`;
+      }
+    });
+    
+    if (!hasOptions) {
+      description += `Geen extra opties geselecteerd\n`;
+    }
+    description += `\n`;
+  }
+  
+  // Contact information
+  description += `## CONTACTGEGEVENS\n`;
+  description += `- Naam: **${personalDetails.name}**\n`;
+  description += `- Email: **${personalDetails.email}**\n`;
+  description += `- Telefoon: **${personalDetails.phone}**\n`;
+  description += `- Adres: **${personalDetails.address}**\n\n`;
+  
+  // Source information
+  if (bookingData.metadata) {
+    description += `## BRON\n`;
+    description += `- Website formulier: ${bookingData.metadata.source || 'solar-calculator'}\n`;
+    description += `- Campagne: ${bookingData.metadata.campaign || 'website_organic'}\n`;
+    description += `- Datum: ${formattedDate}\n`;
+  }
+  
+  return description;
+};
+
 // Helper function to create a deal in Pipedrive
 const createDeal = async (personId, bookingData) => {
   try {
     console.log('Creating deal in Pipedrive for person:', personId);
     
-    const { serviceType, roofType, energyConsumption, additionalOptions, personalDetails } = bookingData;
+    const { serviceType, personalDetails } = bookingData;
     
     // Format the deal title
-    const serviceName = serviceTypeMapping[serviceType] || serviceType;
-    const dealTitle = `${serviceName} - ${personalDetails.name}`;
+    const serviceInfo = serviceTypeMapping[serviceType] || { name: serviceType, description: 'Onbekend type' };
+    const dealTitle = `${serviceInfo.name} - ${personalDetails.name}`;
     
-    // Prepare deal description with all the details
-    let description = `Service: ${serviceName}\n`;
+    // Create detailed description of all selections
+    const detailedDescription = createDetailedDescription(bookingData);
     
-    // Add personal details explicitly to the description in case they're needed
-    description += `\nContactgegevens:\n`;
-    description += `- Naam: ${personalDetails.name}\n`;
-    description += `- Email: ${personalDetails.email}\n`;
-    description += `- Telefoon: ${personalDetails.phone}\n`;
-    description += `- Adres: ${personalDetails.address}\n\n`;
+    // Prepare custom fields object including the special description field
+    const customFields = {
+      [PIPEDRIVE_DESCRIPTION_FIELD_KEY]: detailedDescription
+    };
     
-    // Add roof type for solar panel installations
-    if (serviceType === 'zonnepanelen' || serviceType === 'zonnepanelen-batterij') {
-      description += `Dak type: ${roofTypeMapping[roofType] || roofType}\n`;
+    // Calculate an estimated deal value based on service type
+    let estimatedValue = 0;
+    if (serviceType === 'zonnepanelen') {
+      estimatedValue = 6500;
+    } else if (serviceType === 'batterijopslag') {
+      estimatedValue = 8000;
+    } else if (serviceType === 'zonnepanelen-batterij') {
+      estimatedValue = 12000;
+    } else if (serviceType === 'laadpaal') {
+      estimatedValue = 2000;
     }
     
-    // Add consumption mapping
-    const consumptionLabel = consumptionMapping[energyConsumption/100] || `${energyConsumption} kWh`;
-    description += `Jaarlijks verbruik: ${consumptionLabel}\n`;
-    
-    // Add additional services if any
-    if (additionalOptions && Object.keys(additionalOptions).length > 0) {
-      description += '\nAanvullende opties:\n';
-      Object.entries(additionalOptions).forEach(([option, details]) => {
-        if (details && details.selected) {
-          description += `- ${option}\n`;
-        }
-      });
-    }
-    
-    // Add house age if provided
-    if (additionalOptions && additionalOptions.house_age) {
-      description += `\nWoning leeftijd: ${additionalOptions.house_age === 'old' ? 'Ouder dan 10 jaar' : 'Jonger dan 10 jaar'}\n`;
-    }
-    
-    // Add metadata if available
-    if (bookingData.metadata) {
-      description += `\nMetadata:\n`;
-      description += `- Bron: ${bookingData.metadata.source || 'Website'}\n`;
-      description += `- Datum: ${bookingData.metadata.submissionDate || new Date().toISOString()}\n`;
-    }
-    
-    // Prepare the deal payload - keep it simple
+    // Prepare the deal payload with all necessary information
     const dealPayload = {
       title: dealTitle,
       person_id: personId,
-      // Avoid setting pipeline or stage IDs - let Pipedrive use its defaults
       status: 'open',
       visible_to: 3, // visible to entire company
-      value: 0, // This will be updated later after assessment
+      value: estimatedValue,
       currency: 'EUR',
-      description: description
+      description: detailedDescription, // Regular description field as fallback
+      ...customFields // Add the custom field(s)
     };
     
     console.log('Deal payload to Pipedrive:', dealPayload);
@@ -134,6 +265,18 @@ const createDeal = async (personId, bookingData) => {
     
     if (response.data.success) {
       console.log('Deal created successfully in Pipedrive:', response.data.data.id);
+      
+      // As a precaution, also update the deal to ensure the custom field is set
+      try {
+        await axios.put(
+          `${PIPEDRIVE_API_URL}/deals/${response.data.data.id}?api_token=${PIPEDRIVE_API_TOKEN}`,
+          { [PIPEDRIVE_DESCRIPTION_FIELD_KEY]: detailedDescription }
+        );
+        console.log('Updated deal with custom description field');
+      } catch (updateError) {
+        console.error('Failed to update custom field, but deal was created successfully:', updateError);
+      }
+      
       return response.data.data.id;
     } else {
       console.error('Error response from Pipedrive API:', response.data);
@@ -202,14 +345,21 @@ export async function saveBooking(bookingData) {
       try {
         console.log('Attempting simplified deal creation as fallback...');
         const { serviceType, personalDetails } = bookingData;
-        const serviceName = serviceTypeMapping[serviceType] || serviceType;
-        const dealTitle = `${serviceName} - ${personalDetails.name}`;
         
-        // Very simplified deal payload
+        // Use the enhanced service mapping
+        const serviceInfo = serviceTypeMapping[serviceType] || { name: serviceType, description: 'Onbekend type' };
+        const dealTitle = `${serviceInfo.name} - ${personalDetails.name}`;
+        
+        // Create detailed description even for fallback
+        const detailedDescription = createDetailedDescription(bookingData);
+        
+        // Simplified but still comprehensive payload
         const simplePayload = {
           title: dealTitle,
           person_id: personId,
-          visible_to: 3
+          visible_to: 3,
+          description: detailedDescription, // Regular description field as fallback
+          [PIPEDRIVE_DESCRIPTION_FIELD_KEY]: detailedDescription // Custom field with API key
         };
         
         const response = await axios.post(
@@ -221,13 +371,16 @@ export async function saveBooking(bookingData) {
           dealId = response.data.data.id;
           console.log('Simplified deal created successfully with ID:', dealId);
           
-          // Now update the deal with the description
-          const description = `Lead from website form\n\nContact: ${personalDetails.name}\nEmail: ${personalDetails.email}\nPhone: ${personalDetails.phone}\nAddress: ${personalDetails.address}`;
-          
-          await axios.put(
-            `${PIPEDRIVE_API_URL}/deals/${dealId}?api_token=${PIPEDRIVE_API_TOKEN}`,
-            { description }
-          );
+          // Update the custom field explicitly to ensure it's set
+          try {
+            await axios.put(
+              `${PIPEDRIVE_API_URL}/deals/${dealId}?api_token=${PIPEDRIVE_API_TOKEN}`,
+              { [PIPEDRIVE_DESCRIPTION_FIELD_KEY]: detailedDescription }
+            );
+            console.log('Updated deal with custom description field using fallback method');
+          } catch (updateError) {
+            console.error('Failed to update custom field in fallback, but deal was created:', updateError);
+          }
         }
       } catch (fallbackError) {
         console.error("Fallback deal creation also failed:", fallbackError);
