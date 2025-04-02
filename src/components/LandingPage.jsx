@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { saveBooking, getPipedriveStages, getPipedrivePipelines } from '../services/bookingService';
 import Header from './Header';
 import Footer from './Footer'; 
@@ -66,10 +67,8 @@ const prepareFormData = (data) => {
 };
 
 const LandingPage = () => {
-  // --- REMOVED State for Pricing Settings --- 
-  // const [pricingSettings, setPricingSettings] = useState(null); 
-  // const [settingsLoading, setSettingsLoading] = useState(true);
-  // const [settingsError, setSettingsError] = useState('');
+  // Navigation hook for redirecting
+  const navigate = useNavigate();
   
   // Refs for scrolling
   const calculatorRef = useRef(null);
@@ -89,7 +88,6 @@ const LandingPage = () => {
     address: ''
   });
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   // eslint-disable-next-line no-unused-vars
   const [error, setError] = useState('');
 
@@ -206,8 +204,8 @@ const LandingPage = () => {
       const result = await saveBooking(formData);
       console.log('Submission successful! Result:', result);
       
-      // Set success state before resetting form
-      setSuccess(true);
+      // Redirect to thank you page
+      navigate('/bedankt');
     } catch (err) {
       console.error('Submission Error:', err);
       
@@ -235,7 +233,6 @@ const LandingPage = () => {
     setPersonalDetails({ name: '', phone: '', email: '', address: '' });
     setStep(1);
     setError('');
-    setSuccess(false);
   };
   
   // Copied WindowCounter component (needed for Additional Services step)
@@ -878,26 +875,11 @@ const LandingPage = () => {
               
               {/* Container for Steps */}
               <div className="flex-1 p-4 space-y-4 overflow-y-auto rounded-b-[20px] shadow-md">
-                 {/* Conditional rendering for Success Message */}
-                 {success ? (
-                   <div className="text-center p-6">
-                      <svg className="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                     <h3 className="mt-4 text-xl font-semibold text-gray-900">Offerte Aanvraag Ontvangen!</h3>
-                     <p className="mt-2 text-gray-600">Bedankt voor uw aanvraag. Een van onze adviseurs neemt binnen 24 uur contact met u op.</p>
-                     <p className="mt-2 text-gray-600">Wij komen graag kosteloos bij u langs voor een exacte inmeting en prijsopgave.</p>
-                     <button onClick={resetForm} className="mt-6 py-2 px-4 bg-[#FFB366] text-gray-900 font-semibold rounded-lg hover:bg-[#f8a650]">
-                       Nieuwe Aanvraag
-                     </button>
-                   </div>
-                 ) : (
-                    // Render current step and navigation
-                   <>
-                     {renderStep()}
-                     <StepNavigation />
-                   </>
-                 )}
+                {/* Render current step and navigation */}
+                <>
+                  {renderStep()}
+                  <StepNavigation />
+                </>
               </div>
             </div>
           </div>
