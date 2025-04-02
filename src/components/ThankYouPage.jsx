@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 
 const ThankYouPage = () => {
+  // Fire conversion tracking event when the thank you page loads
+  useEffect(() => {
+    // Check if gtag is available
+    if (window.gtag) {
+      // Track the conversion
+      window.gtag('event', 'conversion', {
+        'send_to': 'AW-607343181/MZI2CMrN7OgBEOHl2aAC',  // Conversion ID
+        'value': 1.0,
+        'currency': 'EUR',
+        'transaction_id': Date.now().toString()
+      });
+      console.log('Conversion tracking event fired');
+    }
+  }, []);
   return (
     <div className="min-h-screen bg-[#FAF3E7]">
       <Header />
