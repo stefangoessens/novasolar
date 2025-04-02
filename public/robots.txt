@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://kindwindowcleaning.com/sitemap.xml
+Sitemap: https://novasolar.be/sitemap.xml
