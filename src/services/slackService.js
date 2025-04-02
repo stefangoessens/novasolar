@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Slack API token (should be in .env in production)
 const SLACK_TOKEN = 'xoxe.xoxp-1-Mi0yLTM5NTQ1OTkwMzg3NTctMzk1NzU3NDkzODcyMi04NzE5MTgzNjcwNzM2LTg3MTkxODM2NzA4MTYtNzc3ZTAzODA4NTNjNmUwODRmNjRlNTkzMjg3NTNiYzc3MjE4YWExYTYzOTFhYzc3M2M0NDRlOGZlYTA2OWUxMw';
-const SLACK_CHANNEL = 'C06U91Z7NC7'; // Replace with your channel ID
+const SLACK_CHANNEL = 'leads'; // Channel name where lead notifications will be sent
 
 /**
  * Format form data into a structured Slack message
