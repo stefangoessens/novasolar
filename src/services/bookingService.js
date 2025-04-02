@@ -222,9 +222,8 @@ const createDeal = async (personId, bookingData) => {
     
     const { serviceType, personalDetails } = bookingData;
     
-    // Format the deal title
-    const serviceInfo = serviceTypeMapping[serviceType] || { name: serviceType, description: 'Onbekend type' };
-    const dealTitle = `${serviceInfo.name} - ${personalDetails.name}`;
+    // Format the deal title - just use the person's name
+    const dealTitle = personalDetails.name;
     
     // Create detailed description of all selections
     const detailedDescription = createDetailedDescription(bookingData);
@@ -371,9 +370,8 @@ export async function saveBooking(bookingData) {
         console.log('Attempting simplified deal creation as fallback...');
         const { serviceType, personalDetails } = bookingData;
         
-        // Use the enhanced service mapping
-        const serviceInfo = serviceTypeMapping[serviceType] || { name: serviceType, description: 'Onbekend type' };
-        const dealTitle = `${serviceInfo.name} - ${personalDetails.name}`;
+        // Simplify deal title to just the person's name
+        const dealTitle = personalDetails.name;
         
         // Create detailed description even for fallback
         const detailedDescription = createDetailedDescription(bookingData);
