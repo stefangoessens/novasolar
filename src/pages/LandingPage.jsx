@@ -1,5 +1,4 @@
 import React from 'react';
-import WindowCleaningCalculator from '../components/WindowCleaningCalculator';
 import { FaCalculator, FaClock, FaCalendarAlt } from 'react-icons/fa';
 
 const LandingPage = () => {
