@@ -22,12 +22,12 @@ const StepTwo = ({ cleaningType, numStories, setNumStories, nextStep, styles }) 
           <button onClick={() => { setNumStories(1); nextStep(); }}
                   className={`${unifiedButtonBase} ${numStories === 1 ? unifiedButtonSelected : unifiedButtonUnselected}`}>
             <span className={unifiedButtonMainText}>Hellend dak</span>
-            <span className={unifiedButtonSubText}>Schuin dak met dakpannen</span>
+            <span className={unifiedButtonSubText}>Pannendak, leien dak, metalen/zinken dak</span>
           </button>
           <button onClick={() => { setNumStories(2); nextStep(); }}
                   className={`${unifiedButtonBase} ${numStories === 2 ? unifiedButtonSelected : unifiedButtonUnselected}`}>
             <span className={unifiedButtonMainText}>Plat dak</span>
-            <span className={unifiedButtonSubText}>Vlakke dakbedekking</span>
+            <span className={unifiedButtonSubText}>EPDM, Roofing, bitumen..</span>
           </button>
         </div>
       </div>
@@ -86,12 +86,12 @@ const StepTwo = ({ cleaningType, numStories, setNumStories, nextStep, styles }) 
         <button onClick={() => { setNumStories(1); nextStep(); }}
                 className={`${unifiedButtonBase} ${numStories === 1 ? unifiedButtonSelected : unifiedButtonUnselected}`}>
           <span className={unifiedButtonMainText}>Hellend dak</span>
-          <span className={unifiedButtonSubText}>Schuin dak met dakpannen</span>
+          <span className={unifiedButtonSubText}>Pannendak, leien dak, metalen/zinken dak</span>
         </button>
         <button onClick={() => { setNumStories(2); nextStep(); }}
                 className={`${unifiedButtonBase} ${numStories === 2 ? unifiedButtonSelected : unifiedButtonUnselected}`}>
           <span className={unifiedButtonMainText}>Plat dak</span>
-          <span className={unifiedButtonSubText}>Vlakke dakbedekking</span>
+          <span className={unifiedButtonSubText}>EPDM, Roofing, bitumen..</span>
         </button>
       </div>
     </div>

@@ -14,7 +14,7 @@ const StepFive = ({
   return (
     <div className="space-y-3">
       <h3 className={titleClass}>5. Uw Gegevens</h3>
-      <p className={descriptionClass}>Nodig om uw offerte aan te vragen.</p>
+      <p className={descriptionClass}>U ontvangt van ons een uitgebreide studie met legplan, rendementsanalyse en terugverdientijd.</p>
       
       <div className="space-y-3">
         <input 
@@ -54,7 +54,7 @@ const StepFive = ({
       )}
 
       <div className="mt-4">
-        <p className="text-xs text-gray-500 mb-3">Onze specialist komt kosteloos bij u langs voor een exacte inmeting en prijsopgave.</p>
+        <p className="text-xs text-gray-500 mb-3">Onze energie expert contacteert u voor meer advies en een persoonlijke prijsopgave.</p>
         <button
           onClick={handleBookingConfirm}
           type="button"

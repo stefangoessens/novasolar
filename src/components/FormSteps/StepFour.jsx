@@ -85,7 +85,7 @@ const StepFour = ({
           <button onClick={() => { setNumWindows(70); nextStep(); }}
                   className={`${unifiedButtonBase} ${numWindows === 70 ? unifiedButtonSelected : unifiedButtonUnselected}`}>
             <span className={unifiedButtonMainText}>6000 kWh of meer</span>
-            <span className={unifiedButtonSubText}>Zeer groot huishouden (5+ personen)</span>
+            <span className={unifiedButtonSubText}>Groot verbruik (laadpaal, warmtepomp, zwembad..)</span>
           </button>
         </div>
       </div>
@@ -117,33 +117,20 @@ const StepFour = ({
           <button onClick={() => { setNumWindows(70); nextStep(); }}
                   className={`${unifiedButtonBase} ${numWindows === 70 ? unifiedButtonSelected : unifiedButtonUnselected}`}>
             <span className={unifiedButtonMainText}>6000 kWh of meer</span>
-            <span className={unifiedButtonSubText}>Zeer groot huishouden (5+ personen)</span>
+            <span className={unifiedButtonSubText}>Groot verbruik (laadpaal, warmtepomp, zwembad..)</span>
           </button>
         </div>
       </div>
     );
   } 
   
-  // For EV charger
+  // For EV charger - skip consumption step
   else if (cleaningType === 'laadpaal') {
-    return (
-      <div className="space-y-3">
-        <h3 className={titleClass}>4. We kunnen u een offerte maken</h3>
-        <p className={descriptionClass}>Op basis van uw antwoorden kunnen we een passende oplossing samenstellen.</p>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
-          <h4 className="text-lg font-semibold text-gray-800 mb-2">Vraag nu uw gratis offerte aan</h4>
-          <p className="text-sm text-gray-600 mb-4">
-            We nemen binnen 24 uur contact met u op om de mogelijkheden te bespreken.
-          </p>
-          <button 
-            onClick={nextStep} 
-            className="bg-[#FFB366] text-gray-900 px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#FFA64D] transition-colors"
-          >
-            Offerte aanvragen
-          </button>
-        </div>
-      </div>
-    );
+    // Set a default value and advance to next step
+    setNumWindows(35);
+    nextStep();
+    // Return null since this step will be skipped
+    return null;
   }
   
   // Default additional services

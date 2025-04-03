@@ -27,7 +27,7 @@ const StepThree = ({
     return (
       <div className="space-y-3">
         <h3 className={titleClass}>3. Hoe oud is uw woning?</h3>
-        <p className={descriptionClass}>Dit helpt ons bij het inschatten van uw elektrische installatie.</p>
+        <p className={descriptionClass}>Om het correcte BTW tarief te kunnen berekenen.</p>
         <div className="space-y-3">
           <button onClick={() => { 
             // We store the choice in additionalServices for simplicity
@@ -64,15 +64,15 @@ const StepThree = ({
           <h3 className={titleClass}>3. Welke merk omvormer heeft u?</h3>
           <p className={descriptionClass}>Dit bepaalt welke thuisbatterij compatibel is met uw installatie.</p>
           <div className="space-y-3">
-            {["SMA", "Fronius", "Huawei", "Goodwe", "SolarEdge", "Ik weet het niet"].map((brand) => (
+            {["SMA", "Fronius", "Huawei", "Goodwe", "SolarEdge", "Ik weet het niet/Andere"].map((brand) => (
               <button 
                 key={brand}
                 onClick={() => { 
                   // We're using the numWindows state to store the brand choice
-                  setNumWindows(["SMA", "Fronius", "Huawei", "Goodwe", "SolarEdge", "Ik weet het niet"].indexOf(brand) + 1);
+                  setNumWindows(["SMA", "Fronius", "Huawei", "Goodwe", "SolarEdge", "Ik weet het niet/Andere"].indexOf(brand) + 1);
                   nextStep();
                 }}
-                className={`${unifiedButtonBase} ${numWindows === ["SMA", "Fronius", "Huawei", "Goodwe", "SolarEdge", "Ik weet het niet"].indexOf(brand) + 1 ? unifiedButtonSelected : unifiedButtonUnselected}`}
+                className={`${unifiedButtonBase} ${numWindows === ["SMA", "Fronius", "Huawei", "Goodwe", "SolarEdge", "Ik weet het niet/Andere"].indexOf(brand) + 1 ? unifiedButtonSelected : unifiedButtonUnselected}`}
               >
                 <span className={unifiedButtonMainText}>{brand}</span>
               </button>
