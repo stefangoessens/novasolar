@@ -81,35 +81,13 @@ const StepThree = ({
         </div>
       );
     } 
-    // If they selected "No" for hybrid inverter
+    // If they selected "No" for hybrid inverter - skip this step
     else {
-      return (
-        <div className="space-y-3">
-          <h3 className={titleClass}>3. Wat is uw jaarlijks verbruik?</h3>
-          <div className="text-center mb-2">
-            <span className="text-xl font-bold text-gray-800">{numWindows * 100} kWh</span>
-          </div>
-          <div>
-            <style>{sliderStyles}</style>
-            <input
-              type="range"
-              min="20"
-              max="100"
-              step="5"
-              value={numWindows}
-              onChange={(e) => setNumWindows(parseInt(e.target.value))}
-              className="custom-slider"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>2.000 kWh</span>
-              <span>10.000 kWh</span>
-            </div>
-            <p className="mt-2 text-xs text-gray-500 text-center">
-              Een gemiddeld huishouden van {Math.ceil(numWindows * 100 / 3500)} personen verbruikt ongeveer {numWindows * 100} kWh per jaar.
-            </p>
-          </div>
-        </div>
-      );
+      // Set a default value and advance to next step
+      setNumWindows(35);
+      nextStep();
+      // Return null since this step will be skipped
+      return null;
     }
   }
   
