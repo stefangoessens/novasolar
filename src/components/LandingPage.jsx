@@ -48,7 +48,7 @@ const LandingPage = () => {
                 loading="eager"
                 poster={`${process.env.PUBLIC_URL}/hero-poster.jpg`}
                 className="absolute inset-0 w-full h-full object-cover" 
-                aria-label="Professional window cleaning service in action"
+                aria-label="Zonnepanelen installateur in mechelen"
               >
                 <source src={`${process.env.PUBLIC_URL}/loop.webm`} type="video/webm" />
                 Your browser does not support the video tag.
